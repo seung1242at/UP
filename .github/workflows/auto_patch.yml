@@ -1,0 +1,56 @@
+name: BNS auto-publish patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'updates/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bns-patch-publishing
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read repository files
+        uses: actions/checkout@v4
+      - name: Check for uploaded patch files
+        id: files
+        shell: bash
+        run: |
+          if find updates -type f ! -name '.gitkeep' -print -quit | grep -q .; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'No patch files yet; skipping release.'
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Generate cumulative patch and manifest
+        if: steps.files.outputs.present == 'true'
+        env:
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          TAG="patch-${GITHUB_SHA:0:12}"
+          python3 scripts/build_release.py \
+            --repo "$REPO" \
+            --tag "$TAG" \
+            --source updates \
+            --output release_assets
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+      - name: Publish GitHub Release for existing launcher
+        if: steps.files.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$TAG" release_assets/manifest.json release_assets/p_* \
+            --target "$GITHUB_SHA" \
+            --title "BNS patch $TAG" \
+            --notes 'Automatically generated cumulative patch from updates/.' \
+            --latest
