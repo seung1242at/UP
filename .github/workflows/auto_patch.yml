@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'updates/**'
+      - 'patch_links.json'
   workflow_dispatch:
 
 permissions:
@@ -24,7 +25,8 @@ jobs:
         id: files
         shell: bash
         run: |
-          if find updates -type f ! -name '.gitkeep' -print -quit | grep -q .; then
+          if find updates -type f ! -name '.gitkeep' -print -quit | grep -q . || \
+             (test -f patch_links.json && python3 -c 'import json; assert len(json.load(open("patch_links.json"))["files"]) > 0'); then
             echo 'present=true' >> "$GITHUB_OUTPUT"
           else
             echo 'No patch files yet; skipping release.'
@@ -37,10 +39,11 @@ jobs:
         shell: bash
         run: |
           TAG="patch-${GITHUB_SHA:0:12}"
-          python3 scripts/build_release.py \
+          python3 scripts/build_mixed_release.py \
             --repo "$REPO" \
             --tag "$TAG" \
             --source updates \
+            --links patch_links.json \
             --output release_assets
           echo "TAG=$TAG" >> "$GITHUB_ENV"
       - name: Publish GitHub Release for existing launcher
@@ -49,7 +52,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          gh release create "$TAG" release_assets/manifest.json release_assets/p_* \
+          gh release create "$TAG" release_assets/* \
             --target "$GITHUB_SHA" \
             --title "BNS patch $TAG" \
             --notes 'Automatically generated cumulative patch from updates/.' \
