@@ -1,8 +1,28 @@
 {
   "files": [
     {
+      "path": "bin64/plugins/te64.dll",
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
+    },
+    {
+      "path": "contents/local/NCSoft/data/config64.dat",
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
+    },
+    {
+      "path": "contents/local/NCSoft/data/datafile64.bin",
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
+    },
+    {
+      "path": "contents/local/NCSoft/data/localfile64.bin",
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
+    },
+    {
       "path": "contents/local/NCSoft/data/xml64.dat",
-      "url": "https://drive.google.com/file/d/1MXTpeUc2LoPUWZ8_MkGC9ha3pDhyH16E/view?usp=sharing"
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
+    },
+    {
+      "path": "bin64/start.dat",
+      "url": "https://drive.google.com/file/d/10DyvONWI1u2FADtV-MqQT0nqfK3Q6AIw/view?usp=sharing"
     }
   ]
 }
