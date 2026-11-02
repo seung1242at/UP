@@ -92,6 +92,11 @@ def main():
                 file_entry["sha256"] = digest.lower()
             if size is not None:
                 file_entry["size"] = size
+            # Optional exact file inside a ZIP; useful when the download
+            # URL points at an archive containing more than one XML.
+            zip_entry = entry.get("zip_entry")
+            if zip_entry is not None:
+                file_entry["zip_entry"] = normalize_path(zip_entry)
             files[key] = file_entry
 
     archives = []
