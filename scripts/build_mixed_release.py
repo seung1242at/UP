@@ -75,20 +75,24 @@ def main():
             if not parsed.hostname or parsed.username or parsed.password:
                 raise ValueError(f"Invalid download URL for {path}")
             digest = entry.get("sha256")
-            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
-                raise ValueError(f"Missing or invalid SHA-256 for {path}")
+            # SHA-256 and size are optional for URL-only patches. Existing
+            # values, when present, still provide verification to new clients.
+            if digest is not None and (not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest)):
+                raise ValueError(f"Invalid SHA-256 for {path}")
             size = entry.get("size")
-            if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            if size is not None and (isinstance(size, bool) or not isinstance(size, int) or size < 0):
                 raise ValueError(f"size must be a nonnegative integer: {path}")
             old = files.get(key)
             if old:
                 old_asset = unquote(urlparse(old["url"]).path.rsplit("/", 1)[-1])
                 if old_asset.startswith("p_") and (output / old_asset).is_file():
                     (output / old_asset).unlink()
-            files[key] = {
-                "path": path, "url": url,
-                "sha256": digest.lower(), "size": size
-            }
+            file_entry = {"path": path, "url": url}
+            if digest is not None:
+                file_entry["sha256"] = digest.lower()
+            if size is not None:
+                file_entry["size"] = size
+            files[key] = file_entry
 
     archives = []
     if args.links.is_file():
@@ -113,14 +117,17 @@ def main():
             if not parsed.hostname or parsed.username or parsed.password:
                 raise ValueError(f"Invalid ZIP URL: {name}")
             digest = archive.get("sha256")
-            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
-                raise ValueError(f"Missing or invalid ZIP SHA-256: {name}")
+            if digest is not None and (not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest)):
+                raise ValueError(f"Invalid ZIP SHA-256: {name}")
             size = archive.get("size")
-            if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
-                raise ValueError(f"ZIP size must be a positive byte count: {name}")
-            archives.append({
-                "name": name, "url": url, "sha256": digest.lower(), "size": size
-            })
+            if size is not None and (isinstance(size, bool) or not isinstance(size, int) or size < 0):
+                raise ValueError(f"Invalid ZIP size: {name}")
+            archive_entry = {"name": name, "url": url}
+            if digest is not None:
+                archive_entry["sha256"] = digest.lower()
+            if size is not None:
+                archive_entry["size"] = size
+            archives.append(archive_entry)
 
     if not files and not archives:
         raise ValueError("No uploaded files, external file links, or ZIP patches registered")
