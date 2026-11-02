@@ -90,16 +90,50 @@ def main():
                 "sha256": digest.lower(), "size": size
             }
 
-    if not files:
-        raise ValueError("No uploaded patch files or link entries found")
+    archives = []
+    if args.links.is_file():
+        raw_archives = links.get("archives", [])
+        if not isinstance(raw_archives, list) or len(raw_archives) > 100:
+            raise ValueError("archives must be an array with at most 100 ZIP patches")
+        seen_names = set()
+        for archive in raw_archives:
+            if not isinstance(archive, dict):
+                raise ValueError("Each archives entry must be an object")
+            name = archive.get("name", "update.zip")
+            if (not isinstance(name, str) or not name or len(name) > 160
+                    or "/" in name or "\\" in name or ":" in name):
+                raise ValueError("Invalid ZIP patch name")
+            if name.casefold() in seen_names:
+                raise ValueError("Each ZIP patch must have a unique name")
+            seen_names.add(name.casefold())
+            url = archive.get("url")
+            if not isinstance(url, str) or urlparse(url).scheme != "https":
+                raise ValueError(f"ZIP patch must use HTTPS: {name}")
+            parsed = urlparse(url)
+            if not parsed.hostname or parsed.username or parsed.password:
+                raise ValueError(f"Invalid ZIP URL: {name}")
+            digest = archive.get("sha256")
+            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+                raise ValueError(f"Missing or invalid ZIP SHA-256: {name}")
+            size = archive.get("size")
+            if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+                raise ValueError(f"ZIP size must be a positive byte count: {name}")
+            archives.append({
+                "name": name, "url": url, "sha256": digest.lower(), "size": size
+            })
+
+    if not files and not archives:
+        raise ValueError("No uploaded files, external file links, or ZIP patches registered")
     if len(files) > 900:
         raise ValueError("Too many files in manifest")
     manifest["files"] = sorted(files.values(), key=lambda item: item["path"].casefold())
+    if archives:
+        manifest["archives"] = archives
     (output / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8"
     )
-    print("Generated", len(files), "patch entries; external links override matching uploaded paths")
+    print("Generated", len(files), "files and", len(archives), "ZIP archives; external links override uploaded files")
 
 
 if __name__ == "__main__":
