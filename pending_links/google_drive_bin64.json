@@ -1,0 +1,18 @@
+{
+  "status": "pending_file_verification",
+  "source": {
+    "provider": "google_drive",
+    "share_url": "https://drive.google.com/file/d/1MXTpeUc2LoPUWZ8_MkGC9ha3pDhyH16E/view?usp=sharing",
+    "file_id": "1MXTpeUc2LoPUWZ8_MkGC9ha3pDhyH16E"
+  },
+  "installation": {
+    "game_relative_folder": "bin64",
+    "filename": null
+  },
+  "verification": {
+    "sha256": null,
+    "size": null,
+    "direct_download_confirmed": false
+  },
+  "note": "Draft configuration only. NOT an active patch. Confirm original filename, hash, download behavior before updating patch_links.json."
+}
